@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <fstream>
 
 //Screen Dimensions
 int gScreenHeight = 480;
@@ -63,6 +64,24 @@ GLuint CompileShader(GLuint type, const std::string& source)
 	}
 
 	return shaderObject;
+}
+
+std::string LoadShaderAsString(const std::string& filename)
+{
+	std::string result = "";
+	std::string line = "";
+	std::ifstream myFile(filename.c_str());
+
+	if (myFile.is_open() )
+	{
+		while (std::getline(myFile, line))
+		{
+			result += line + '\n';
+		}
+		myFile.close();
+	}
+
+	return result;
 }
 
 int main(int argc, char* args[])
@@ -160,20 +179,8 @@ int main(int argc, char* args[])
 	{
 		//create shader program
 		{
-			const std::string vertexShaderSource =
-				"#version 410 core\n"
-				"in vec4 position;\n"
-				"void main()\n"
-				"{\n"
-				"	gl_Position = vec4(position.x, position.y, position.z, position.w);\n"
-				"}\n";
-			const std::string fragmentShaderSource =
-				"#version 410 core\n"
-				"out vec4 color;\n"
-				"void main()\n"
-				"{\n"
-				"	color = vec4(1.0f, 0.5f, 0.0f, 1.0f);\n"
-				"}\n";
+			const std::string vertexShaderSource = LoadShaderAsString(".\\shaders\\vert.glsl");
+			const std::string fragmentShaderSource = LoadShaderAsString(".\\shaders\\frag.glsl");
 
 			GLuint programObject = glCreateProgram();
 
