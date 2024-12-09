@@ -19,7 +19,6 @@ bool gQuit = false;
 GLuint gVertexArrayObject = 0;
 //VBO
 GLuint gVertexBufferObject = 0;
-GLuint gVertexBufferObject2 = 0;
 
 //program object for our shader
 GLuint gGraphicsPipelineShaderProgram = 0;
@@ -142,18 +141,14 @@ int main(int argc, char* args[])
 	//vertex specification: Setup our geometry
 	{
 		//lives on CPU
-		const std::vector<GLfloat> vertexPosition
+		const std::vector<GLfloat> vertexData
 		{
 			-0.8f, -0.8f, 0.0f, //left vertex position
+			 1.0f,  0.0f, 0.0f, //color
 			 0.8f, -0.8f, 0.0f, //right vertex position
-			 0.0f,  0.8f, 0.0f // top vertext position
-		};
-
-		const std::vector<GLfloat> vertexColors
-		{
-			 1.0f,  0.0f, 0.0f, //left vertex position
-			 0.0f,  1.0f, 0.0f, //right vertex position
-			 0.0f,  0.0f, 1.0f // top vertext position
+			 0.0f,  1.0f, 0.0f, //color
+			 0.0f,  0.8f, 0.0f, // top vertext position
+			 0.0f,  0.0f, 1.0f  //color
 		};
 
 		//we start setting things up on the GPU
@@ -164,8 +159,8 @@ int main(int argc, char* args[])
 		glBindBuffer(GL_ARRAY_BUFFER, gVertexBufferObject);
 		glBufferData(
 			GL_ARRAY_BUFFER,
-			vertexPosition.size() * sizeof(GL_FLOAT),
-			vertexPosition.data(),
+			vertexData.size() * sizeof(GL_FLOAT),
+			vertexData.data(),
 			GL_STATIC_DRAW
 		);
 
@@ -175,17 +170,8 @@ int main(int argc, char* args[])
 			3,
 			GL_FLOAT,
 			GL_FALSE,
-			0,
+			sizeof(GL_FLOAT)*6,//stribe
 			(void*)0
-		);
-
-		// setting up our colors
-		glGenBuffers(1, &gVertexBufferObject2);
-		glBindBuffer(GL_ARRAY_BUFFER, gVertexBufferObject2);
-		glBufferData(GL_ARRAY_BUFFER,
-			vertexColors.size() * sizeof(GL_FLOAT),
-			vertexColors.data(),
-			GL_STATIC_DRAW
 		);
 
 		// linking up the attributes in our VAO
@@ -195,8 +181,8 @@ int main(int argc, char* args[])
 			3, //r,g,b
 			GL_FLOAT,
 			GL_FALSE,
-			0,
-			(void*)0
+			sizeof(GL_FLOAT)*6,
+			(GLvoid*)(sizeof(GL_FLOAT)*3)
 		);
 
 		glBindVertexArray(0);
