@@ -16,9 +16,10 @@ SDL_GLContext gOpenGLContext = nullptr;
 bool gQuit = false;
 
 //VAO
-GLuint gVertextArrayObject = 0;
+GLuint gVertexArrayObject = 0;
 //VBO
-GLuint gVertextBufferObject = 0;
+GLuint gVertexBufferObject = 0;
+GLuint gVertexBufferObject2 = 0;
 
 //program object for our shader
 GLuint gGraphicsPipelineShaderProgram = 0;
@@ -143,23 +144,31 @@ int main(int argc, char* args[])
 		//lives on CPU
 		const std::vector<GLfloat> vertexPosition
 		{
-			-0.8f, -0.8f, 0.0f,
-			 0.8f, -0.8f, 0.0f,
-			 0.0f,  0.8f, 0.0f
+			-0.8f, -0.8f, 0.0f, //left vertex position
+			 0.8f, -0.8f, 0.0f, //right vertex position
+			 0.0f,  0.8f, 0.0f // top vertext position
+		};
+
+		const std::vector<GLfloat> vertexColors
+		{
+			 1.0f,  0.0f, 0.0f, //left vertex position
+			 0.0f,  1.0f, 0.0f, //right vertex position
+			 0.0f,  0.0f, 1.0f // top vertext position
 		};
 
 		//we start setting things up on the GPU
-		glGenVertexArrays(1, &gVertextArrayObject);
-		glBindVertexArray(gVertextArrayObject);
+		glGenVertexArrays(1, &gVertexArrayObject);
+		glBindVertexArray(gVertexArrayObject);
 
-		glGenBuffers(1, &gVertextBufferObject);
-		glBindBuffer(GL_ARRAY_BUFFER, gVertextBufferObject);
+		glGenBuffers(1, &gVertexBufferObject);
+		glBindBuffer(GL_ARRAY_BUFFER, gVertexBufferObject);
 		glBufferData(
 			GL_ARRAY_BUFFER,
-			vertexPosition.size() * sizeof(GLfloat),
+			vertexPosition.size() * sizeof(GL_FLOAT),
 			vertexPosition.data(),
 			GL_STATIC_DRAW
 		);
+
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(
 			0,
@@ -170,8 +179,29 @@ int main(int argc, char* args[])
 			(void*)0
 		);
 
+		// setting up our colors
+		glGenBuffers(1, &gVertexBufferObject2);
+		glBindBuffer(GL_ARRAY_BUFFER, gVertexBufferObject2);
+		glBufferData(GL_ARRAY_BUFFER,
+			vertexColors.size() * sizeof(GL_FLOAT),
+			vertexColors.data(),
+			GL_STATIC_DRAW
+		);
+
+		// linking up the attributes in our VAO
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(
+			1,
+			3, //r,g,b
+			GL_FLOAT,
+			GL_FALSE,
+			0,
+			(void*)0
+		);
+
 		glBindVertexArray(0);
 		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
 	}
 
 	//create graphic pipeline
@@ -235,8 +265,8 @@ int main(int argc, char* args[])
 
 			//draw
 			{
-				glBindVertexArray(gVertextArrayObject);
-				glBindBuffer(GL_ARRAY_BUFFER, gVertextBufferObject);
+				glBindVertexArray(gVertexArrayObject);
+				glBindBuffer(GL_ARRAY_BUFFER, gVertexBufferObject);
 				glDrawArrays(GL_TRIANGLES, 0, 3);
 
 				// stop using our current graphics pipeline
