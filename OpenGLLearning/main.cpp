@@ -143,11 +143,18 @@ int main(int argc, char* args[])
 		//lives on CPU
 		const std::vector<GLfloat> vertexData
 		{
-			-0.8f, -0.8f, 0.0f, //left vertex position
+			-0.5f, -0.5f, 0.0f, //left vertex position
 			 1.0f,  0.0f, 0.0f, //color
-			 0.8f, -0.8f, 0.0f, //right vertex position
+			 0.5f, -0.5f, 0.0f, //right vertex position
 			 0.0f,  1.0f, 0.0f, //color
-			 0.0f,  0.8f, 0.0f, // top vertext position
+			-0.5f,  0.5f, 0.0f, //top-left vertext position
+			 0.0f,  0.0f, 1.0f, //color
+			 //second triangle
+			 0.5f, -0.5f, 0.0f, //right vertex position
+			 0.0f,  1.0f, 0.0f, //color
+			 0.5f,  0.5f, 0.0f, //top-right vertex position
+			 0.0f,  0.0f, 1.0f, //color
+			-0.5f,  0.5f, 0.0f, //top-left vertext position
 			 0.0f,  0.0f, 1.0f  //color
 		};
 
@@ -253,7 +260,7 @@ int main(int argc, char* args[])
 			{
 				glBindVertexArray(gVertexArrayObject);
 				glBindBuffer(GL_ARRAY_BUFFER, gVertexBufferObject);
-				glDrawArrays(GL_TRIANGLES, 0, 3);
+				glDrawArrays(GL_TRIANGLES, 0, 6);
 
 				// stop using our current graphics pipeline
 				// Note: this is not necessary if we only have one graphics pipeline.
