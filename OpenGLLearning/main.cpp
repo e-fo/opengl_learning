@@ -19,6 +19,9 @@ bool gQuit = false;
 GLuint gVertexArrayObject = 0;
 //VBO
 GLuint gVertexBufferObject = 0;
+//IBO or EBO
+//this is used to store the array of indices that we want to draw from, when we do indexed drawing.
+GLuint gIndexBufferObject = 0;
 
 //program object for our shader
 GLuint gGraphicsPipelineShaderProgram = 0;
@@ -143,19 +146,18 @@ int main(int argc, char* args[])
 		//lives on CPU
 		const std::vector<GLfloat> vertexData
 		{
+			 // 0 - vertex
 			-0.5f, -0.5f, 0.0f, //left vertex position
 			 1.0f,  0.0f, 0.0f, //color
+			 // 1 - vertex
 			 0.5f, -0.5f, 0.0f, //right vertex position
 			 0.0f,  1.0f, 0.0f, //color
+			 // 2 - vertex
 			-0.5f,  0.5f, 0.0f, //top-left vertext position
 			 0.0f,  0.0f, 1.0f, //color
-			 //second triangle
-			 0.5f, -0.5f, 0.0f, //right vertex position
-			 0.0f,  1.0f, 0.0f, //color
+			 // 3 - vertex
 			 0.5f,  0.5f, 0.0f, //top-right vertex position
 			 0.0f,  0.0f, 1.0f, //color
-			-0.5f,  0.5f, 0.0f, //top-left vertext position
-			 0.0f,  0.0f, 1.0f  //color
 		};
 
 		//we start setting things up on the GPU
@@ -168,6 +170,20 @@ int main(int argc, char* args[])
 			GL_ARRAY_BUFFER,
 			vertexData.size() * sizeof(GL_FLOAT),
 			vertexData.data(),
+			GL_STATIC_DRAW
+		);
+
+		const std::vector<GLuint> indexBufferData{ 2,0,1, 3,2,1 };
+
+		//setup the index (element) buffer object (IBO i.e. EBO)
+		glGenBuffers(1, &gIndexBufferObject);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIndexBufferObject);
+
+		//populate our index buffer
+		glBufferData(
+			GL_ELEMENT_ARRAY_BUFFER, 
+			indexBufferData.size() * sizeof(GLuint), 
+			indexBufferData.data(), 
 			GL_STATIC_DRAW
 		);
 
@@ -260,7 +276,8 @@ int main(int argc, char* args[])
 			{
 				glBindVertexArray(gVertexArrayObject);
 				glBindBuffer(GL_ARRAY_BUFFER, gVertexBufferObject);
-				glDrawArrays(GL_TRIANGLES, 0, 6);
+				//glDrawArrays(GL_TRIANGLES, 0, 6);
+				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 				// stop using our current graphics pipeline
 				// Note: this is not necessary if we only have one graphics pipeline.
