@@ -6,6 +6,28 @@
 #include <iostream>
 #include <fstream>
 
+//--------------------------- Error Handling Routines --------------------------------
+static void GLClearAllErrors() {
+	while (glGetError() != GL_NO_ERROR) {}
+}
+
+// returns true if we have an error
+static bool GLCheckErrorStatus(const char* function, int line) {
+	while (GLenum error = glGetError()) {
+		std::cout << 
+			"OpenGL Error: " << error << 
+			"\tLine: " << line << 
+			"\tFunction: " << function << 
+			std::endl;
+		return true;
+	}
+	return false;
+}
+
+#define GLCheck(x) GLClearAllErrors(); x; GLCheckErrorStatus(#x, __LINE__);
+//------------------------------------------------------------------------------------
+
+
 //Screen Dimensions
 int gScreenHeight = 480;
 int gScreenWidth = 680;
