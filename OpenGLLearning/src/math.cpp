@@ -7,10 +7,11 @@
 #include <iostream>
 
 int disabled_main(int argc, char* args[]) {
-	glm::vec3 A(1.0f);
-	glm::vec3 B(0.5f);
+	glm::vec3 A(3.0f, 4.0f, 0.0f);
+	glm::vec3 B(0.0f, 4.0f, 0.0f);
 
-	std::cout << "The result is: " << glm::dot(A, B) << std::endl;
+	std::cout << "A:" << glm::length(A) << std::endl;
+	std::cout << "B:" << glm::length(B) << std::endl;
 	return 0;
 }
 

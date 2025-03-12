@@ -1,6 +1,12 @@
-#include <stdio.h>
+// Third Party Libraries
 #include <SDL2/SDL.h>
 #include <glad/glad.h>
+#include <glm/glm.hpp>
+#include <glm/vec4.hpp> // glm::vec4
+#include <glm/mat4x4.hpp> // glm::mat4
+
+// Cpp Standard Template Libraries (STL)
+#include <stdio.h>
 #include <vector>
 #include <string>
 #include <iostream>
