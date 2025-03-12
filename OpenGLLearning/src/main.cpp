@@ -54,6 +54,8 @@ GLuint gIndexBufferObject = 0;
 //program object for our shader
 GLuint gGraphicsPipelineShaderProgram = 0;
 
+float gUOffset = 0.0f;
+
 GLuint CompileShader(GLuint type, const std::string& source)
 {
 	GLuint shaderObject;
@@ -287,6 +289,16 @@ int main(int argc, char* args[])
 						gQuit = true;
 					}
 				}
+
+				const Uint8* state = SDL_GetKeyboardState(NULL);
+				if (state[SDL_SCANCODE_UP]) {
+					gUOffset += 0.001f;
+					std::cout << "gUOffset: " << gUOffset << std::endl;
+				}
+				if (state[SDL_SCANCODE_DOWN]) {
+					gUOffset -= 0.001f;
+					std::cout << "gUOffset: " << gUOffset << std::endl;
+				}
 			}
 
 			//pre draw
@@ -298,6 +310,14 @@ int main(int argc, char* args[])
 				glClearColor(1.f, 1.f, 0.1f, 1.f);
 				glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 				glUseProgram(gGraphicsPipelineShaderProgram);
+				GLint location = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_offset");
+				if (location >= 0) {
+					//std::cout << "location of u_offset:" << location << std::endl;
+					glUniform1f(location, gUOffset);
+				}
+				else {
+					std::cout << "Could not find u_offse. maybe a mispelling?" << std::endl;
+				}
 			}
 
 			//draw
