@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/vec4.hpp> // glm::vec4
 #include <glm/mat4x4.hpp> // glm::mat4
+#include <glm/gtc/matrix_transform.hpp>
 
 // Cpp Standard Template Libraries (STL)
 #include <stdio.h>
@@ -55,6 +56,7 @@ GLuint gIndexBufferObject = 0;
 GLuint gGraphicsPipelineShaderProgram = 0;
 
 float gUOffset = 0.0f;
+
 
 GLuint CompileShader(GLuint type, const std::string& source)
 {
@@ -310,13 +312,19 @@ int main(int argc, char* args[])
 				glClearColor(1.f, 1.f, 0.1f, 1.f);
 				glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 				glUseProgram(gGraphicsPipelineShaderProgram);
-				GLint location = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_offset");
-				if (location >= 0) {
+				
+				glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, gUOffset, 0.0f));
+				
+				// Retrive our location of our Model Matrix
+				GLint uModelMatrixLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_ModelMatrix");
+
+				if (uModelMatrixLocation >= 0) {
 					//std::cout << "location of u_offset:" << location << std::endl;
-					glUniform1f(location, gUOffset);
+					glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, &translate[0][0]);
 				}
 				else {
-					std::cout << "Could not find u_offse. maybe a mispelling?" << std::endl;
+					std::cout << "Could not find u_ModelMatrix. maybe a mispelling?" << std::endl;
+					exit(EXIT_FAILURE);
 				}
 			}
 
