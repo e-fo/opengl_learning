@@ -313,7 +313,8 @@ int main(int argc, char* args[])
 				glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 				glUseProgram(gGraphicsPipelineShaderProgram);
 				
-				glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, gUOffset, 0.0f));
+				//Model transformation by translating our object into world space.
+				glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, gUOffset));
 				
 				// Retrive our location of our Model Matrix
 				GLint uModelMatrixLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_ModelMatrix");
@@ -324,6 +325,25 @@ int main(int argc, char* args[])
 				}
 				else {
 					std::cout << "Could not find u_ModelMatrix. maybe a mispelling?" << std::endl;
+					exit(EXIT_FAILURE);
+				}
+
+				//Projection matrix (in perspective)
+				glm::mat4 projection = glm::perspective(
+					glm::radians(45.0f),
+					(float)gScreenWidth/(float)gScreenHeight,
+					0.1f,
+					10.0f);
+
+				// Retrieve our location of our perspective matrix uniform
+				GLint uProjectionLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_Projection");
+
+				if (uProjectionLocation >= 0) {
+					//std::cout << "location of u_offset:" << location << std::endl;
+					glUniformMatrix4fv(uProjectionLocation, 1, GL_FALSE, &projection[0][0]);
+				}
+				else {
+					std::cout << "Could not find u_Perspective. maybe a mispelling?" << std::endl;
 					exit(EXIT_FAILURE);
 				}
 			}
