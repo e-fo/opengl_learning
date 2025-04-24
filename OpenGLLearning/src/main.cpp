@@ -55,8 +55,9 @@ GLuint gIndexBufferObject = 0;
 //program object for our shader
 GLuint gGraphicsPipelineShaderProgram = 0;
 
-float gUOffset = 0.0f;
+float gUOffset = -2.0f;
 float gURotate = 0.0f;
+float gUScale = 0.5f;
 
 GLuint CompileShader(GLuint type, const std::string& source)
 {
@@ -327,6 +328,7 @@ int main(int argc, char* args[])
 				//Update our model matrix by applying a rotation after our translation.
 				model = glm::rotate(model, glm::radians(gURotate), glm::vec3(0.0f, 0.1f, 0.0f));
 
+				model = glm::scale(model, glm::vec3(gUScale, gUScale, gUScale));
 				// Retrive our location of our Model Matrix
 				GLint uModelMatrixLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_ModelMatrix");
 
