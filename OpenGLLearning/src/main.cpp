@@ -323,10 +323,10 @@ int main(int argc, char* args[])
 				glUseProgram(gGraphicsPipelineShaderProgram);
 				
 				//Model transformation by translating our object into world space.
-				glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, gUOffset));
+				glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(gURotate), glm::vec3(0.0f, 0.1f, 0.0f));
 				
 				//Update our model matrix by applying a rotation after our translation.
-				model = glm::rotate(model, glm::radians(gURotate), glm::vec3(0.0f, 0.1f, 0.0f));
+				model = glm::translate(model, glm::vec3(0.0f, 0.0f, gUOffset));
 
 				model = glm::scale(model, glm::vec3(gUScale, gUScale, gUScale));
 				// Retrive our location of our Model Matrix
