@@ -56,7 +56,7 @@ GLuint gIndexBufferObject = 0;
 GLuint gGraphicsPipelineShaderProgram = 0;
 
 float gUOffset = 0.0f;
-
+float gURotate = 0.0f;
 
 GLuint CompileShader(GLuint type, const std::string& source)
 {
@@ -301,6 +301,14 @@ int main(int argc, char* args[])
 					gUOffset -= 0.001f;
 					std::cout << "gUOffset: " << gUOffset << std::endl;
 				}
+				if (state[SDL_SCANCODE_LEFT]) {
+					gURotate -= 0.01f;
+					std::cout << "gURotate: " << gURotate << std::endl;
+				}
+				if (state[SDL_SCANCODE_RIGHT]) {
+					gURotate += 0.01f;
+					std::cout << "gURotate: " << gURotate << std::endl;
+				}
 			}
 
 			//pre draw
@@ -314,14 +322,17 @@ int main(int argc, char* args[])
 				glUseProgram(gGraphicsPipelineShaderProgram);
 				
 				//Model transformation by translating our object into world space.
-				glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, gUOffset));
+				glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, gUOffset));
 				
+				//Update our model matrix by applying a rotation after our translation.
+				model = glm::rotate(model, glm::radians(gURotate), glm::vec3(0.0f, 0.1f, 0.0f));
+
 				// Retrive our location of our Model Matrix
 				GLint uModelMatrixLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_ModelMatrix");
 
 				if (uModelMatrixLocation >= 0) {
 					//std::cout << "location of u_offset:" << location << std::endl;
-					glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, &translate[0][0]);
+					glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, &model[0][0]);
 				}
 				else {
 					std::cout << "Could not find u_ModelMatrix. maybe a mispelling?" << std::endl;
