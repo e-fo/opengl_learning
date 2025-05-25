@@ -13,6 +13,9 @@
 #include <iostream>
 #include <fstream>
 
+// Our libraries
+#include "Camera.hpp"
+
 //--------------------------- Error Handling Routines --------------------------------
 static void GLClearAllErrors() {
 	while (glGetError() != GL_NO_ERROR) {}
@@ -58,6 +61,11 @@ GLuint gGraphicsPipelineShaderProgram = 0;
 float gUOffset = -2.0f;
 float gURotate = 0.0f;
 float gUScale = 0.5f;
+
+/// <summary>
+/// A single global camera.
+/// </summary>
+Camera gCamera;
 
 GLuint CompileShader(GLuint type, const std::string& source)
 {
@@ -292,23 +300,24 @@ int main(int argc, char* args[])
 						gQuit = true;
 					}
 				}
-
+				// TODO: use some other key to move our object
+				//gUOffset += 0.001f;
+				//std::cout << "gUOffset: " << gUOffset << std::endl;
 				const Uint8* state = SDL_GetKeyboardState(NULL);
+				float speed = 0.005f;
 				if (state[SDL_SCANCODE_UP]) {
-					gUOffset += 0.001f;
-					std::cout << "gUOffset: " << gUOffset << std::endl;
+					gCamera.MoveForward(speed);
 				}
 				if (state[SDL_SCANCODE_DOWN]) {
-					gUOffset -= 0.001f;
-					std::cout << "gUOffset: " << gUOffset << std::endl;
+					gCamera.MoveBackward(speed);
+					//gUOffset -= 0.001f;
+					//std::cout << "gUOffset: " << gUOffset << std::endl;
 				}
 				if (state[SDL_SCANCODE_LEFT]) {
-					gURotate -= 0.01f;
-					std::cout << "gURotate: " << gURotate << std::endl;
+					gCamera.MoveLeft(speed);
 				}
 				if (state[SDL_SCANCODE_RIGHT]) {
-					gURotate += 0.01f;
-					std::cout << "gURotate: " << gURotate << std::endl;
+					gCamera.MoveRight(speed);
 				}
 			}
 
@@ -322,11 +331,14 @@ int main(int argc, char* args[])
 				glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 				glUseProgram(gGraphicsPipelineShaderProgram);
 				
-				//Model transformation by translating our object into world space.
-				glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(gURotate), glm::vec3(0.0f, 0.1f, 0.0f));
-				
+				gURotate -= 0.01f;
+				std::cout << "gURotate: " << gURotate << std::endl;
+
 				//Update our model matrix by applying a rotation after our translation.
-				model = glm::translate(model, glm::vec3(0.0f, 0.0f, gUOffset));
+				glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, gUOffset));
+
+				//Model transformation by translating our object into world space.
+				model = glm::rotate(model, glm::radians(gURotate), glm::vec3(0.0f, 0.1f, 0.0f));
 
 				model = glm::scale(model, glm::vec3(gUScale, gUScale, gUScale));
 				// Retrive our location of our Model Matrix
@@ -338,6 +350,17 @@ int main(int argc, char* args[])
 				}
 				else {
 					std::cout << "Could not find u_ModelMatrix. maybe a mispelling?" << std::endl;
+					exit(EXIT_FAILURE);
+				}
+
+				glm::mat4 view = gCamera.GetViewMatrix();
+				GLint uViewLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_ViewMatrix");
+				if (uViewLocation >= 0) {
+					//std::cout << "location of u_offset:" << location << std::endl;
+					glUniformMatrix4fv(uViewLocation, 1, GL_FALSE, &view[0][0]);
+				}
+				else {
+					std::cout << "Could not find u_ViewMatrix. maybe a mispelling?" << std::endl;
 					exit(EXIT_FAILURE);
 				}
 
