@@ -286,18 +286,27 @@ int main(int argc, char* args[])
 
 	//application main loop
 	{
+		SDL_WarpMouseInWindow(gGraphicsApplicationWindow, gScreenWidth/2, gScreenHeight/2);
+		SDL_SetRelativeMouseMode(SDL_TRUE);
 		while (!gQuit)
 		{
 			//input
 			{
 				SDL_Event e;
-
+				static int mouseX = gScreenWidth/2; 
+				static int mouseY = gScreenHeight/2;
 				while (SDL_PollEvent(&e) != 0)
 				{
 					if (e.type == SDL_QUIT)
 					{
 						printf("Goodbye!\n");
 						gQuit = true;
+					}
+					else if (e.type == SDL_MOUSEMOTION)
+					{
+						mouseX += e.motion.xrel;
+						mouseY += e.motion.yrel;
+						gCamera.MouseLook(mouseX, mouseY);
 					}
 				}
 				// TODO: use some other key to move our object
