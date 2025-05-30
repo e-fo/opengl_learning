@@ -209,7 +209,7 @@ int main(int argc, char* args[])
 		glBindBuffer(GL_ARRAY_BUFFER, gVertexBufferObject);
 		glBufferData(
 			GL_ARRAY_BUFFER,
-			vertexData.size() * sizeof(GL_FLOAT),
+			vertexData.size() * sizeof(GLfloat),
 			vertexData.data(),
 			GL_STATIC_DRAW
 		);
@@ -233,8 +233,8 @@ int main(int argc, char* args[])
 			0,
 			3,
 			GL_FLOAT,
-			GL_FALSE,
-			sizeof(GL_FLOAT)*6,//stribe
+			false,
+			sizeof(GLfloat)*6,//stribe
 			(void*)0
 		);
 
@@ -244,9 +244,9 @@ int main(int argc, char* args[])
 			1,
 			3, //r,g,b
 			GL_FLOAT,
-			GL_FALSE,
-			sizeof(GL_FLOAT)*6,
-			(GLvoid*)(sizeof(GL_FLOAT)*3)
+			false,
+			sizeof(GLfloat)*6,
+			(GLvoid*)(sizeof(GLfloat)*3)
 		);
 
 		glBindVertexArray(0);
@@ -328,6 +328,10 @@ int main(int argc, char* args[])
 				if (state[SDL_SCANCODE_RIGHT]) {
 					gCamera.MoveRight(speed);
 				}
+				if (state[SDL_SCANCODE_ESCAPE])
+				{
+					gQuit = true;
+				}
 			}
 
 			//pre draw
@@ -355,7 +359,7 @@ int main(int argc, char* args[])
 
 				if (uModelMatrixLocation >= 0) {
 					//std::cout << "location of u_offset:" << location << std::endl;
-					glUniformMatrix4fv(uModelMatrixLocation, 1, GL_FALSE, &model[0][0]);
+					glUniformMatrix4fv(uModelMatrixLocation, 1, false, &model[0][0]);
 				}
 				else {
 					std::cout << "Could not find u_ModelMatrix. maybe a mispelling?" << std::endl;
@@ -366,7 +370,7 @@ int main(int argc, char* args[])
 				GLint uViewLocation = glGetUniformLocation(gGraphicsPipelineShaderProgram, "u_ViewMatrix");
 				if (uViewLocation >= 0) {
 					//std::cout << "location of u_offset:" << location << std::endl;
-					glUniformMatrix4fv(uViewLocation, 1, GL_FALSE, &view[0][0]);
+					glUniformMatrix4fv(uViewLocation, 1, false, &view[0][0]);
 				}
 				else {
 					std::cout << "Could not find u_ViewMatrix. maybe a mispelling?" << std::endl;
@@ -385,7 +389,7 @@ int main(int argc, char* args[])
 
 				if (uProjectionLocation >= 0) {
 					//std::cout << "location of u_offset:" << location << std::endl;
-					glUniformMatrix4fv(uProjectionLocation, 1, GL_FALSE, &projection[0][0]);
+					glUniformMatrix4fv(uProjectionLocation, 1, false, &projection[0][0]);
 				}
 				else {
 					std::cout << "Could not find u_Perspective. maybe a mispelling?" << std::endl;
