@@ -17,6 +17,24 @@
 #include "Camera.hpp"
 
 //--------------------------- Error Handling Routines --------------------------------
+/// <summary>
+/// Returns the location of an uniform variable based on its name.
+/// </summary>
+/// <param name="pipeline"></param>
+/// <param name="name"></param>
+/// <returns></returns>
+static int FindUniformLocation(GLuint pipeline, const GLchar* name)
+{
+	GLint location = glGetUniformLocation(pipeline, name);
+	if (location < 0) {
+		std::cout << "Could not find " << name << ", maybe a mispelling? " << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	//TODO: Think of some better error code, if we don't want to exit.
+	return location;
+}
+
 static void GLClearAllErrors() {
 	while (glGetError() != GL_NO_ERROR) {}
 }
@@ -290,68 +308,6 @@ void MeshSetPipeline(Mesh3D* mesh, GLuint pipeline)
 	mesh->mPipeline = pipeline;
 }
 
-void MeshUpdate(Mesh3D* mesh)
-{
-	glUseProgram(mesh->mPipeline);
-
-	mesh->mURotate -= 0.01f;
-	std::cout << "gURotate: " << mesh->mURotate << std::endl;
-
-	//Update our model matrix by applying a rotation after our translation.
-	glm::mat4 model = glm::translate(glm::mat4(1.0f), 
-		glm::vec3(
-			mesh->mTransform.x, 
-			mesh->mTransform.y, 
-			mesh->mTransform.z
-		)
-	);
-
-	//Model transformation by translating our object into world space.
-	model = glm::rotate(model, glm::radians(mesh->mURotate), glm::vec3(0.0f, 0.1f, 0.0f));
-	model = glm::scale(model, glm::vec3(mesh->mUScale, mesh->mUScale, mesh->mUScale));
-	// Retrive our location of our Model Matrix
-	GLint uModelMatrixLocation = glGetUniformLocation(gApp.mGraphicsPipelineShaderProgram, "u_ModelMatrix");
-
-	if (uModelMatrixLocation >= 0) {
-		//std::cout << "location of u_offset:" << location << std::endl;
-		glUniformMatrix4fv(uModelMatrixLocation, 1, false, &model[0][0]);
-	}
-	else {
-		std::cout << "Could not find u_ModelMatrix. maybe a mispelling?" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	glm::mat4 view = gApp.mCamera.GetViewMatrix();
-	GLint uViewLocation = glGetUniformLocation(gApp.mGraphicsPipelineShaderProgram, "u_ViewMatrix");
-	if (uViewLocation >= 0) {
-		//std::cout << "location of u_offset:" << location << std::endl;
-		glUniformMatrix4fv(uViewLocation, 1, false, &view[0][0]);
-	}
-	else {
-		std::cout << "Could not find u_ViewMatrix. maybe a mispelling?" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	//Projection matrix (in perspective)
-	glm::mat4 projection = glm::perspective(
-		glm::radians(45.0f),
-		(float)gApp.mScreenWidth / (float)gApp.mScreenHeight,
-		0.1f,
-		10.0f);
-
-	// Retrieve our location of our perspective matrix uniform
-	GLint uProjectionLocation = glGetUniformLocation(gApp.mGraphicsPipelineShaderProgram, "u_Projection");
-
-	if (uProjectionLocation >= 0) {
-		//std::cout << "location of u_offset:" << location << std::endl;
-		glUniformMatrix4fv(uProjectionLocation, 1, false, &projection[0][0]);
-	}
-	else {
-		std::cout << "Could not find u_Perspective. maybe a mispelling?" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-}
-
 /// <summary>
 /// Draw Mesh
 /// 
@@ -368,6 +324,61 @@ void DrawMesh(Mesh3D* mesh)
 
 	// Setup which graphics pipeline we are going to use
 	glUseProgram(mesh->mPipeline);
+
+	glUseProgram(mesh->mPipeline);
+
+	mesh->mURotate -= 0.01f;
+	std::cout << "gURotate: " << mesh->mURotate << std::endl;
+
+	//Update our model matrix by applying a rotation after our translation.
+	{
+		glm::mat4 model = glm::translate(glm::mat4(1.0f),
+			glm::vec3(
+				mesh->mTransform.x,
+				mesh->mTransform.y,
+				mesh->mTransform.z
+			)
+		);
+		//Model transformation by translating our object into world space.
+		model = glm::rotate(model, glm::radians(mesh->mURotate), glm::vec3(0.0f, 0.1f, 0.0f));
+		model = glm::scale(model, glm::vec3(mesh->mUScale, mesh->mUScale, mesh->mUScale));
+		// Retrive our location of our Model Matrix
+		glUniformMatrix4fv(
+			FindUniformLocation(gApp.mGraphicsPipelineShaderProgram, "u_ModelMatrix"),
+			1,
+			false,
+			&model[0][0]
+		);
+	}
+
+	//NOTE: Often times we combine the model and the view matrix together to just send in 1 uniform.
+	//Updating our view matrix
+	{
+		glm::mat4 view = gApp.mCamera.GetViewMatrix();
+		glUniformMatrix4fv(
+			FindUniformLocation(gApp.mGraphicsPipelineShaderProgram, "u_ViewMatrix"),
+			1,
+			false,
+			&view[0][0]
+		);
+	}
+
+	//Updating our projection matrix (in perspective)
+	{
+		glm::mat4 projection = glm::perspective(
+			glm::radians(45.0f),
+			(float)gApp.mScreenWidth / (float)gApp.mScreenHeight,
+			0.1f,
+			10.0f);
+
+		// Retrieve our location of our perspective matrix uniform
+		glUniformMatrix4fv(
+			FindUniformLocation(gApp.mGraphicsPipelineShaderProgram, "u_Projection"),
+			1,
+			false,
+			&projection[0][0]
+		);
+	}
 
 	glBindVertexArray(mesh->mVertexArrayObject);
 	glBindBuffer(GL_ARRAY_BUFFER, mesh->mVertexBufferObject);
@@ -493,11 +504,7 @@ int main(int argc, char* args[])
 				glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 			}
 
-			//pre draw
-			MeshUpdate(&gMesh1);
 			DrawMesh(&gMesh1);
-
-			MeshUpdate(&gMesh2);
 			DrawMesh(&gMesh2);
 
 			//update the screen
