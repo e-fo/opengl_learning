@@ -365,18 +365,14 @@ void DrawMesh(Mesh3D* mesh)
 
 	//Updating our projection matrix (in perspective)
 	{
-		glm::mat4 projection = glm::perspective(
-			glm::radians(45.0f),
-			(float)gApp.mScreenWidth / (float)gApp.mScreenHeight,
-			0.1f,
-			10.0f);
+		glm::mat4 perspective = gApp.mCamera.GetProjectionMatrix();
 
 		// Retrieve our location of our perspective matrix uniform
 		glUniformMatrix4fv(
 			FindUniformLocation(gApp.mGraphicsPipelineShaderProgram, "u_Projection"),
 			1,
 			false,
-			&projection[0][0]
+			&perspective[0][0]
 		);
 	}
 
@@ -395,6 +391,14 @@ int main(int argc, char* args[])
 	printf("Hello OpenGL!\n");
 	
 	InitializeProgram(&gApp);
+
+	//setup our camera
+	gApp.mCamera.SetProjectionMatrix(
+		glm::radians(45.0f), 
+		(float)gApp.mScreenWidth/gApp.mScreenHeight, 
+		0.1f, 
+		10.0f
+	);
 
 	MeshCreate(&gMesh1);
 	gMesh1.mTransform.x = 0.0f;
