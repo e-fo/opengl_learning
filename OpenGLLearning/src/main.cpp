@@ -53,6 +53,9 @@ struct App {
 	Camera			mCamera;
 };
 
+struct Transform {
+	float x, y, z;
+};
 
 struct Mesh3D {
 	//VAO
@@ -62,7 +65,13 @@ struct Mesh3D {
 	//IBO or EBO
 	//this is used to store the array of indices that we want to draw from, when we do indexed drawing.
 	GLuint mIndexBufferObject	= 0;
-	float mUOffset				= -2.0f;
+
+	/// <summary>
+	///This is the graphic pipeline used for this mesh.
+	/// </summary>
+	GLuint mPipeline			= 0;
+
+	Transform mTransform;
 	float mURotate				= 0.0f;
 	float mUScale				= 0.5f;
 };
@@ -70,6 +79,7 @@ struct Mesh3D {
 
 App gApp; //Global application
 Mesh3D gMesh1;
+Mesh3D gMesh2;
 
 GLuint CompileShader(GLuint type, const std::string& source)
 {
@@ -191,7 +201,7 @@ void InitializeProgram(App* app)
 /// vertex specification: Setup our geometry
 /// </summary>
 /// <param name="mesh"></param>
-void VertexSpecification( Mesh3D* mesh )
+void MeshCreate(Mesh3D* mesh)
 {
 	//lives on CPU
 	const std::vector<GLfloat> vertexData
@@ -263,13 +273,127 @@ void VertexSpecification( Mesh3D* mesh )
 	glDisableVertexAttribArray(1);
 }
 
+void MeshDelete(Mesh3D* mesh)
+{
+	glDeleteBuffers(1, &mesh->mVertexBufferObject);
+	glDeleteVertexArrays(1, &mesh->mVertexArrayObject);
+}
+
+/// <summary>
+/// MeshSetPipeline
+/// Needs to set the graphic pipeline before we draw. 
+/// </summary>
+/// <param name="pipeline"></param>
+/// <param name=""></param>
+void MeshSetPipeline(Mesh3D* mesh, GLuint pipeline)
+{
+	mesh->mPipeline = pipeline;
+}
+
+void MeshUpdate(Mesh3D* mesh)
+{
+	glUseProgram(mesh->mPipeline);
+
+	mesh->mURotate -= 0.01f;
+	std::cout << "gURotate: " << mesh->mURotate << std::endl;
+
+	//Update our model matrix by applying a rotation after our translation.
+	glm::mat4 model = glm::translate(glm::mat4(1.0f), 
+		glm::vec3(
+			mesh->mTransform.x, 
+			mesh->mTransform.y, 
+			mesh->mTransform.z
+		)
+	);
+
+	//Model transformation by translating our object into world space.
+	model = glm::rotate(model, glm::radians(mesh->mURotate), glm::vec3(0.0f, 0.1f, 0.0f));
+	model = glm::scale(model, glm::vec3(mesh->mUScale, mesh->mUScale, mesh->mUScale));
+	// Retrive our location of our Model Matrix
+	GLint uModelMatrixLocation = glGetUniformLocation(gApp.mGraphicsPipelineShaderProgram, "u_ModelMatrix");
+
+	if (uModelMatrixLocation >= 0) {
+		//std::cout << "location of u_offset:" << location << std::endl;
+		glUniformMatrix4fv(uModelMatrixLocation, 1, false, &model[0][0]);
+	}
+	else {
+		std::cout << "Could not find u_ModelMatrix. maybe a mispelling?" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	glm::mat4 view = gApp.mCamera.GetViewMatrix();
+	GLint uViewLocation = glGetUniformLocation(gApp.mGraphicsPipelineShaderProgram, "u_ViewMatrix");
+	if (uViewLocation >= 0) {
+		//std::cout << "location of u_offset:" << location << std::endl;
+		glUniformMatrix4fv(uViewLocation, 1, false, &view[0][0]);
+	}
+	else {
+		std::cout << "Could not find u_ViewMatrix. maybe a mispelling?" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	//Projection matrix (in perspective)
+	glm::mat4 projection = glm::perspective(
+		glm::radians(45.0f),
+		(float)gApp.mScreenWidth / (float)gApp.mScreenHeight,
+		0.1f,
+		10.0f);
+
+	// Retrieve our location of our perspective matrix uniform
+	GLint uProjectionLocation = glGetUniformLocation(gApp.mGraphicsPipelineShaderProgram, "u_Projection");
+
+	if (uProjectionLocation >= 0) {
+		//std::cout << "location of u_offset:" << location << std::endl;
+		glUniformMatrix4fv(uProjectionLocation, 1, false, &projection[0][0]);
+	}
+	else {
+		std::cout << "Could not find u_Perspective. maybe a mispelling?" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+}
+
+/// <summary>
+/// Draw Mesh
+/// 
+/// Note: We per mesh, choose the graphics pipleine that we want to use.
+/// Generally, this is not very efficient, to 'change state' (pipelines)
+/// very frequently. (But, for learning purposes or flexibility, this is useful)
+/// </summary>
+void DrawMesh(Mesh3D* mesh)
+{
+	if (mesh == nullptr)
+	{
+		return;
+	}
+
+	// Setup which graphics pipeline we are going to use
+	glUseProgram(mesh->mPipeline);
+
+	glBindVertexArray(mesh->mVertexArrayObject);
+	glBindBuffer(GL_ARRAY_BUFFER, mesh->mVertexBufferObject);
+	//glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+	// stop using our current graphics pipeline
+	// Note: this is not necessary if we only have one graphics pipeline.
+	glUseProgram(0);
+}
+
 int main(int argc, char* args[])
 {
 	printf("Hello OpenGL!\n");
 	
 	InitializeProgram(&gApp);
 
-	VertexSpecification(&gMesh1);
+	MeshCreate(&gMesh1);
+	gMesh1.mTransform.x = 0.0f;
+	gMesh1.mTransform.y = 0.0f;
+	gMesh1.mTransform.z = -2.0f;
+
+	MeshCreate(&gMesh2);
+	gMesh2.mTransform.x = 0.0f;
+	gMesh2.mTransform.y = 0.0f;
+	gMesh2.mTransform.z = -4.0f;
 
 	//create graphic pipeline
 	//	- At a minimum, this means the vertex and fragment shader
@@ -300,6 +424,9 @@ int main(int argc, char* args[])
 			gApp.mGraphicsPipelineShaderProgram = programObject;
 		}
 	}
+
+	MeshSetPipeline(&gMesh1, gApp.mGraphicsPipelineShaderProgram);
+	MeshSetPipeline(&gMesh2, gApp.mGraphicsPipelineShaderProgram);
 
 	//application main loop
 	{
@@ -351,80 +478,27 @@ int main(int argc, char* args[])
 				}
 			}
 
-			//pre draw
+			// Clear up the screen
 			{
+				// Disable depth test and face culling.
 				glDisable(GL_DEPTH_TEST);
 				glDisable(GL_CULL_FACE);
 
+				// Initialize clear color
+				// This is the background of the screen.
 				glViewport(0, 0, gApp.mScreenWidth, gApp.mScreenHeight);
 				glClearColor(1.f, 1.f, 0.1f, 1.f);
+
+				// Clear the color and depth buffers.
 				glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-				glUseProgram(gApp.mGraphicsPipelineShaderProgram);
-				
-				gMesh1.mURotate -= 0.01f;
-				std::cout << "gURotate: " << gMesh1.mURotate << std::endl;
-
-				//Update our model matrix by applying a rotation after our translation.
-				glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, gMesh1.mUOffset));
-
-				//Model transformation by translating our object into world space.
-				model = glm::rotate(model, glm::radians(gMesh1.mURotate), glm::vec3(0.0f, 0.1f, 0.0f));
-				float uniformScale = gMesh1.mUScale;
-				model = glm::scale(model, glm::vec3(uniformScale, uniformScale, uniformScale));
-				// Retrive our location of our Model Matrix
-				GLint uModelMatrixLocation = glGetUniformLocation(gApp.mGraphicsPipelineShaderProgram, "u_ModelMatrix");
-
-				if (uModelMatrixLocation >= 0) {
-					//std::cout << "location of u_offset:" << location << std::endl;
-					glUniformMatrix4fv(uModelMatrixLocation, 1, false, &model[0][0]);
-				}
-				else {
-					std::cout << "Could not find u_ModelMatrix. maybe a mispelling?" << std::endl;
-					exit(EXIT_FAILURE);
-				}
-
-				glm::mat4 view = gApp.mCamera.GetViewMatrix();
-				GLint uViewLocation = glGetUniformLocation(gApp.mGraphicsPipelineShaderProgram, "u_ViewMatrix");
-				if (uViewLocation >= 0) {
-					//std::cout << "location of u_offset:" << location << std::endl;
-					glUniformMatrix4fv(uViewLocation, 1, false, &view[0][0]);
-				}
-				else {
-					std::cout << "Could not find u_ViewMatrix. maybe a mispelling?" << std::endl;
-					exit(EXIT_FAILURE);
-				}
-
-				//Projection matrix (in perspective)
-				glm::mat4 projection = glm::perspective(
-					glm::radians(45.0f),
-					(float)gApp.mScreenWidth/(float)gApp.mScreenHeight,
-					0.1f,
-					10.0f);
-
-				// Retrieve our location of our perspective matrix uniform
-				GLint uProjectionLocation = glGetUniformLocation(gApp.mGraphicsPipelineShaderProgram, "u_Projection");
-
-				if (uProjectionLocation >= 0) {
-					//std::cout << "location of u_offset:" << location << std::endl;
-					glUniformMatrix4fv(uProjectionLocation, 1, false, &projection[0][0]);
-				}
-				else {
-					std::cout << "Could not find u_Perspective. maybe a mispelling?" << std::endl;
-					exit(EXIT_FAILURE);
-				}
 			}
 
-			//draw
-			{
-				glBindVertexArray(gMesh1.mVertexArrayObject);
-				glBindBuffer(GL_ARRAY_BUFFER, gMesh1.mVertexBufferObject);
-				//glDrawArrays(GL_TRIANGLES, 0, 6);
-				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+			//pre draw
+			MeshUpdate(&gMesh1);
+			DrawMesh(&gMesh1);
 
-				// stop using our current graphics pipeline
-				// Note: this is not necessary if we only have one graphics pipeline.
-				glUseProgram(0);
-			}
+			MeshUpdate(&gMesh2);
+			DrawMesh(&gMesh2);
 
 			//update the screen
 			SDL_GL_SwapWindow(gApp.mGraphicsApplicationWindow);
@@ -434,6 +508,12 @@ int main(int argc, char* args[])
 	//clean up: call the cleanup function when our program terminates
 	{
 		SDL_DestroyWindow(gApp.mGraphicsApplicationWindow);
+		gApp.mGraphicsApplicationWindow = nullptr;
+
+		MeshDelete(&gMesh1);
+
+		glDeleteProgram(gApp.mGraphicsPipelineShaderProgram);
+
 		SDL_Quit();
 	}
 	return 0;
