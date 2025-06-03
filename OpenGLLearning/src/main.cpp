@@ -72,7 +72,7 @@ struct App {
 };
 
 struct Transform {
-	float x, y, z;
+	glm::mat4 mModelMatrix{ glm::mat4(1.0f) };
 };
 
 struct Mesh3D {
@@ -325,31 +325,12 @@ void DrawMesh(Mesh3D* mesh)
 	// Setup which graphics pipeline we are going to use
 	glUseProgram(mesh->mPipeline);
 
-	glUseProgram(mesh->mPipeline);
-
-	mesh->mURotate -= 0.01f;
-	std::cout << "gURotate: " << mesh->mURotate << std::endl;
-
-	//Update our model matrix by applying a rotation after our translation.
-	{
-		glm::mat4 model = glm::translate(glm::mat4(1.0f),
-			glm::vec3(
-				mesh->mTransform.x,
-				mesh->mTransform.y,
-				mesh->mTransform.z
-			)
-		);
-		//Model transformation by translating our object into world space.
-		model = glm::rotate(model, glm::radians(mesh->mURotate), glm::vec3(0.0f, 0.1f, 0.0f));
-		model = glm::scale(model, glm::vec3(mesh->mUScale, mesh->mUScale, mesh->mUScale));
-		// Retrive our location of our Model Matrix
-		glUniformMatrix4fv(
-			FindUniformLocation(gApp.mGraphicsPipelineShaderProgram, "u_ModelMatrix"),
-			1,
-			false,
-			&model[0][0]
-		);
-	}
+	glUniformMatrix4fv(
+		FindUniformLocation(gApp.mGraphicsPipelineShaderProgram, "u_ModelMatrix"),
+		1,
+		false,
+		&mesh->mTransform.mModelMatrix[0][0]
+	);
 
 	//NOTE: Often times we combine the model and the view matrix together to just send in 1 uniform.
 	//Updating our view matrix
@@ -386,6 +367,43 @@ void DrawMesh(Mesh3D* mesh)
 	glUseProgram(0);
 }
 
+/// <summary>
+/// Translates a mesh -- updating the model matrix.
+/// </summary>
+/// <param name="mesh"></param>
+/// <param name="x"></param>
+/// <param name="y"></param>
+/// <param name="z"></param>
+void MeshTranslate(Mesh3D* mesh, float x, float y, float z)
+{
+	mesh->mURotate -= 0.01f;
+	std::cout << "gURotate: " << mesh->mURotate << std::endl;
+	mesh->mTransform.mModelMatrix = glm::translate(mesh->mTransform.mModelMatrix,glm::vec3(x,y,z));
+	// Retrive our location of our Model Matrix
+}
+
+/// <summary>
+/// Rotates a mesh about an arbitrary axis.
+/// </summary>
+/// <param name="mesh"></param>
+/// <param name="angle"></param>
+/// <param name="axis"></param>
+void MeshRotate(Mesh3D* mesh, float angle, glm::vec3 axis)
+{
+	//Model transformation by translating our object into world space.
+	mesh->mTransform.mModelMatrix = glm::rotate(mesh->mTransform.mModelMatrix, glm::radians(angle), axis);
+}
+
+/// <summary>
+/// Scales a mesh by a given scale factor.
+/// </summary>
+/// <param name="mesh"></param>
+/// <param name="scale"></param>
+void MeshScale(Mesh3D* mesh, glm::vec3 scale)
+{
+	mesh->mTransform.mModelMatrix = glm::scale(mesh->mTransform.mModelMatrix, scale);
+}
+
 int main(int argc, char* args[])
 {
 	printf("Hello OpenGL!\n");
@@ -397,18 +415,17 @@ int main(int argc, char* args[])
 		glm::radians(45.0f), 
 		(float)gApp.mScreenWidth/gApp.mScreenHeight, 
 		0.1f, 
-		10.0f
+		100.0f
 	);
 
 	MeshCreate(&gMesh1);
-	gMesh1.mTransform.x = 0.0f;
-	gMesh1.mTransform.y = 0.0f;
-	gMesh1.mTransform.z = -2.0f;
+	MeshTranslate(&gMesh1, 0.0f, 0.0f, -2.0f);
+	MeshScale(&gMesh1, glm::vec3(1.0f, 1.0f, 1.0f));
+	
 
 	MeshCreate(&gMesh2);
-	gMesh2.mTransform.x = 0.0f;
-	gMesh2.mTransform.y = 0.0f;
-	gMesh2.mTransform.z = -4.0f;
+	MeshTranslate(&gMesh2, 0.0f, 0.0f, -4.0f);
+	MeshScale(&gMesh2, glm::vec3(1.0f, 2.0f, 1.0f));
 
 	//create graphic pipeline
 	//	- At a minimum, this means the vertex and fragment shader
@@ -507,6 +524,10 @@ int main(int argc, char* args[])
 				// Clear the color and depth buffers.
 				glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 			}
+
+			static float rotate = 0.01f;
+			MeshRotate(&gMesh1, rotate, glm::vec3(0.0f, 0.1f, 0.0f));
+			MeshRotate(&gMesh2, -rotate, glm::vec3(0.0f, 0.1f, 0.0f));
 
 			DrawMesh(&gMesh1);
 			DrawMesh(&gMesh2);
